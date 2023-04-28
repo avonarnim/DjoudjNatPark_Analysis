@@ -36,9 +36,9 @@ for index=1:timesteps
     trackY(index) = Yn;
     trackZ(index) = Zn;
 
-    XDeriv = r1*Xn*(1-Xn/k1)-alpha*Xn*Yn/(Xn+D)-h1(t)*Xn
-    YDeriv = -d1*Yn+beta*Xn*Yn/(Xn+D)-h2(t)*Yn-lambda(t)*Yn*Zn+Lambda(t)-L(t)*Yn
-    ZDeriv = Cb*Yn-gamma*Zn^2
+    XDeriv = r1*Xn*(1-Xn/k1)-alpha*Xn*Yn/(Xn+D)-h1(t)*Xn;
+    YDeriv = -d1*Yn+beta*Xn*Yn/(Xn+D)-h2(t)*Yn-lambda(t)*Yn*Zn+Lambda(t)-L(t)*Yn;
+    ZDeriv = Cb*Yn-gamma*Zn^2;
 
     Xplus = Xn + XDeriv * 20/timesteps;
     Yplus = Yn + YDeriv * 20/timesteps;
@@ -57,19 +57,19 @@ nexttile
 plot(trackX, '-');
 title('Prey Population')
 xlabel('Timestep');
-ylabel('Population');
+ylabel('Prey');
 
 nexttile
 
 plot(trackY, '-');
 title('Predator Population');
 xlabel('Timestep');
-ylabel('Population');
+ylabel('Predator');
 
 nexttile
 
 plot(trackZ, '- ');
 title('Tourist Population');
 xlabel('Timestep');
-ylabel('Population');
+ylabel('Tourist');
 
