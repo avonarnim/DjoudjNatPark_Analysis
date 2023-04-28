@@ -1,18 +1,14 @@
 r1 = 1.4;
-% r1 = 1.2; % example 2: smaller intrinsic growth rate
 k1 = 50;
-alpha = 0.16;
-beta = 0.015;
-D = 30;
+alpha = 1.6;
+beta = 0.15;
+D = 10;
 h1 = @(x) 0.3+0.1*cos(2*pi*x);
-h2 = @(x) 0.3+0.07*sin(2*pi*x);
 Lambda = @(x) 4.8+2*sin(2*pi*x);
-% Lambda = @(x) 0; % example 3: no birds entering
-lambda = @(x) 0.05+0.012*cos(2*pi*x);
+h2lambda = @(x) 0.08+0.012*cos(2*pi*x)+0.07*sin(2*pi*x);
 L = @(x) 1.1+0.7*cos(2*pi*x);
 d1 = 1.5;
-% Cb = 0.3;
-Cb = 30; % gives results that align more with the initial paper
+Cb = 3;
 gamma = 0.1;
 
 timesteps = 1000;
@@ -37,9 +33,9 @@ for index=1:timesteps
     trackY(index) = Yn;
     trackZ(index) = Zn;
 
-    XDeriv = r1*Xn*(1-Xn/k1) - alpha*Xn*Yn/(Xn+D) - h1(t)*Xn;
-    YDeriv = -d1*Yn + beta*Xn*Yn/(Xn+D) - h2(t)*Yn - lambda(t)*Yn*Zn + Lambda(t) - L(t)*Yn;
-    ZDeriv = Cb*Yn - gamma*Zn^2;
+    XDeriv = r1*Xn*(1-Xn/k1) - alpha*Xn*Yn/(Xn+D) - h1(t)*Xn*Zn
+    YDeriv = -d1*Yn + beta*Xn*Yn/(Xn+D) - (h2lambda(t))*Yn*Zn + Lambda(t) - L(t)*Yn
+    ZDeriv = Cb*Yn - gamma*Zn^2
 
     Xplus = Xn + XDeriv * 20/timesteps;
     Yplus = Yn + YDeriv * 20/timesteps;
@@ -58,18 +54,19 @@ nexttile
 plot(trackX, '-');
 title('Prey Population')
 xlabel('Timestep');
-ylabel('Prey');
+ylabel('Population');
 
 nexttile
 
 plot(trackY, '-');
 title('Predator Population');
 xlabel('Timestep');
-ylabel('Predator');
+ylabel('Population');
 
 nexttile
 
 plot(trackZ, '- ');
 title('Tourist Population');
 xlabel('Timestep');
-ylabel('Tourist');
+ylabel('Population');
+
