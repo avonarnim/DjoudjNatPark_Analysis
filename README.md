@@ -2,6 +2,11 @@
 
 ## Log
 
+Monday, May 1
+
+- We added a parameter to the disease model so that we can watch the population before and after the outbreak begins.
+- We also added a modified periodic function to replace the classic sine function. This modified periodic function demonstrates a steeper initial incline and tapered decline. This may be more representative of actual migratory patterns throughout the year.
+
 Thursday, April 27
 
 - We created a model for the case where a disease breaks out amongst a migrating predator population.
