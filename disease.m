@@ -1,13 +1,13 @@
-r1 = 14;
-r2 = 3;
-k1 = 50;
-k2 = 3;
-alpha = 1.6;
+r1 = 3;
+r2 = 2;
+k1 = 1;
+k2 = 1;
+alpha = 0.16;
 beta = 0.15;
-D = 30;
-h1 = @(x) 0.3+0.1*cos(2*pi*x);
-h2 = @(x) 0.3+0.07*sin(2*pi*x);
-lambda = @(x) 0.05+0.012*cos(2*pi*x);
+D = 0.5;
+h1 = @(x) 0.1+0.1*cos(2*pi*x);
+h2 = @(x) 0.07+0.07*sin(2*pi*x);
+lambda = @(x) 0.012+0.012*cos(2*pi*x);
 Lambda = @(t) 2+2*sin(2*pi*t);
 LambdaReverse = @(t) 2+2*cos(2*pi*t);
 L = @(t) 2+2*cos(2*pi*t+pi/6);
@@ -15,9 +15,9 @@ LReverse = @(t) 2+2*sin(2*pi*t+pi/6);
 naturalBirdDeath = 0.3;
 Cb = 3;
 gamma = 0.1;
-humansFearFlu = 1;
-infectionRate = 0.5;
-fluSurvivalRate = 1-0.4;
+humansFearFlu = 5;
+infectionRate = .1;
+fluSurvivalRate = 0.9;
 
 timesteps = 1000;
 
@@ -31,12 +31,11 @@ trackYDJinf = zeros(1,timesteps);
 trackYSsusc = zeros(1,timesteps);
 trackYSinf = zeros(1,timesteps);
 
+X = 1;
+Z = 1;
 
-X = 30;
-Z = 15;
-
-YNsusc = 5;
-YNinf = 0.0;
+YNsusc = 1;
+YNinf = 0.1;
 YDJsusc = 0.0;
 YDJinf = 0.0;
 YSsusc = 0.0;
@@ -65,26 +64,46 @@ for index=1:timesteps
     trackYSsusc(index) = YSsusc;
     trackYSinf(index) = YSinf;
 
-    NnewSusceptibleProportion = exp(YNinf*(log(1-infectionRate)));
-    DJnewSusceptibleProportion = exp(YDJinf*(log(1-infectionRate)));
-    SnewSusceptibleProportion = exp(YSinf*(log(1-infectionRate)));
+    if YNinf+YNsusc < 0.0001
+        YNsusc = 0;
+        YNinf = 0;
+        NnewSusceptibleProportion = 1;
+    else
+        NnewSusceptibleProportion = exp(YNinf*(log(1-infectionRate))/(YNinf+YNsusc));
+    end
+
+    if YDJinf+YDJsusc < 0.0001
+        YDJsusc = 0;
+        YDJinf = 0;
+        DJnewSusceptibleProportion = 1;
+    else
+        DJnewSusceptibleProportion = exp(YDJinf*(log(1-infectionRate))/(YDJinf+YDJsusc));
+    end
+
+    if YSinf+YSsusc < 0.0001
+        YSsusc = 0;
+        YSinf = 0;
+        SnewSusceptibleProportion = 1;
+    else
+        SnewSusceptibleProportion = exp(YSinf*(log(1-infectionRate))/(YSinf+YSsusc));
+    end
 
     % Susceptible birds north of Djoudj become infected
     YNsusc = YNsusc*NnewSusceptibleProportion;
     % Infected birds north of Djoudj die from the flu (within a month) 
-    YNinf = YNinf*(1-NnewSusceptibleProportion) + YNinf*fluSurvivalRate;
+    YNinf = YNsusc*(1-NnewSusceptibleProportion) + YNinf*fluSurvivalRate;
     YN = YNsusc + YNinf;
 
     % Susceptible Djoudj birds become infected
     YDJsusc = YDJsusc*DJnewSusceptibleProportion;
     % Susceptible Djoudj birds die from the flu (within a month)
-    YDJinf = YDJinf*(1-DJnewSusceptibleProportion) + YDJinf*fluSurvivalRate;
+    YDJinf = YDJsusc*(1-DJnewSusceptibleProportion) + YDJinf*fluSurvivalRate;
     YDJ = YDJsusc + YDJinf;
 
     % Susceptible birds south of Djoudj become infected
     YSsusc = YSsusc*SnewSusceptibleProportion;
     % Susceptible birds south of Djoudj die from the flu
-    YSinf = YSinf*(1-SnewSusceptibleProportion) + YSinf*fluSurvivalRate;
+    YSinf = YSsusc*(1-SnewSusceptibleProportion) + YSinf*fluSurvivalRate;
     YS = YSsusc + YSinf;
 
     XDeriv = r1*X*(1-X/k1) - alpha*X*YDJ/(X+D) - h1(t)*X*Z;
@@ -137,7 +156,7 @@ for index=1:timesteps
 
     % Tourism is high when there are healthy birds, low when there are sick
     % birds, and low when there's too many people
-    ZDeriv = Cb*YDJsusc - gamma*Z^2 - humansFearFlu*YDJinf;
+    ZDeriv = Cb*YDJsusc*Z/(Z+1) - gamma*Z^2 - humansFearFlu*YDJinf*Z;
 
     Xplus = X + XDeriv * 20/timesteps;
     YNsuscplus = YNsusc + YNsuscDeriv * 20/timesteps;
@@ -148,18 +167,18 @@ for index=1:timesteps
     YSinfplus = YSinf + YSinfDeriv * 20/timesteps;
     Zplus = Z + ZDeriv * 20/timesteps;
 
-    X = Xplus;
-    YNsusc = YNsuscplus;
-    YNinf = YNinfplus;
-    YDJsusc = YDJsuscplus;
-    YDJinf = YDJinfplus;
-    YSsusc = YSsuscplus;
-    YSinf = YSinfplus;
-    Z = Zplus;
+    if (Xplus < 0) X = 0; else X = Xplus; end
+    if (YNsuscplus < 0) YNsusc = 0; else YNsusc = YNsuscplus; end
+    if (YNinfplus < 0) YNinf = 0; else YNinf = YNinfplus; end
+    if (YDJsuscplus < 0) YDJsusc = 0; else YDJsusc = YDJsuscplus; end
+    if (YDJinfplus < 0) YDJinf = 0; else YDJinf = YDJinfplus; end
+    if (YSsuscplus < 0) YSsusc = 0; else YSsusc = YSsuscplus; end
+    if (YSinfplus < 0) YSinf = 0; else YSinf  = YSinfplus; end
+    if (Zplus < 0) Z = 0; else Z = Zplus; end
 end
 
-
-tiles = tiledlayout(5,1);
+% tiles = tiledlayout(5,1);
+tiles = tiledlayout(3,1);
 
 nexttile
 
@@ -168,43 +187,56 @@ plot(t, trackX, '-');
 title('Prey Population')
 xlabel('Years');
 ylabel('Population');
-ylim([0,50]);
+ylim([0,1]);
 
 nexttile
 
 plot(t, trackYNsusc+trackYNinf, '-');
 hold on;
-plot(t, trackYNsusc, '-');
-hold on;
-plot(t, trackYNinf);
-title('Northern Predator Population');
-xlabel('Years');
-ylabel('Population');
-ylim([0,10]);
-
-nexttile
-
-plot(t, trackYDJsusc+trackYDJinf, '-');
-hold on;
-plot(t, trackYDJsusc, '-');
-hold on;
-plot(t, trackYDJinf);
-title('Djoudj Predator Population');
-xlabel('Years');
-ylabel('Population');
-ylim([0,10]);
-
-nexttile
-
 plot(t, trackYSsusc+trackYSinf, '-');
 hold on;
-plot(t, trackYSsusc, '-');
-hold on;
-plot(t, trackYSinf);
-title('Southern Predator Population');
+plot(t, trackYDJsusc+trackYDJinf, '-');
+title('Global Waterbird Population');
 xlabel('Years');
 ylabel('Population');
-ylim([0,10]);
+ylim([0,1]);
+legend('Northern', 'Southern', 'Djoudj');
+
+
+% plot(t, trackYNsusc+trackYNinf, '-');
+% hold on;
+% plot(t, trackYNsusc, '-');
+% hold on;
+% plot(t, trackYNinf);
+% title('Northern Predator Population');
+% xlabel('Years');
+% ylabel('Population');
+% ylim([0,5]);
+% legend('Northern', 'Southern', 'Djoudj');
+
+% nexttile
+% 
+% plot(t, trackYDJsusc+trackYDJinf, '-');
+% hold on;
+% plot(t, trackYDJsusc, '-');
+% hold on;
+% plot(t, trackYDJinf);
+% title('Djoudj Predator Population');
+% xlabel('Years');
+% ylabel('Population');
+% ylim([0,5]);
+% 
+% nexttile
+% 
+% plot(t, trackYSsusc+trackYSinf, '-');
+% hold on;
+% plot(t, trackYSsusc, '-');
+% hold on;
+% plot(t, trackYSinf);
+% title('Southern Predator Population');
+% xlabel('Years');
+% ylabel('Population');
+% ylim([0,5]);
 
 nexttile
 
@@ -212,4 +244,4 @@ plot(t, trackZ, '- ');
 title('Tourist Population');
 xlabel('Years');
 ylabel('Population');
-ylim([0,20]);
+ylim([0,2]);
