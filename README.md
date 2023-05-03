@@ -2,6 +2,11 @@
 
 ## Log
 
+Tuesday, May 2
+
+- We wrote up most of our results and got rid of some bugs especially in the disease model.
+- We also merged the fish-tourist population factors to create a combined model.
+
 Monday, May 1
 
 - We added a parameter to the disease model so that we can watch the population before and after the outbreak begins.
