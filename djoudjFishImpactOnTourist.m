@@ -58,19 +58,19 @@ nexttile
 
 plot(trackX, '-');
 title('Prey Population')
-xlabel('Timestep');
+xlabel('Year');
 ylabel('Prey');
 
 nexttile
 
 plot(trackY, '-');
 title('Predator Population');
-xlabel('Timestep');
+xlabel('Year');
 ylabel('Predator');
 
 nexttile
 
 plot(trackZ, '- ');
 title('Tourist Population');
-xlabel('Timestep');
+xlabel('Year');
 ylabel('Tourist');
